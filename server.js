@@ -11,7 +11,7 @@ app.use(express.json());
 // 1. Initialize Firebase Admin
 try {
     let serviceAccount;
-    
+
     // Try to read from environment variable first (for production/Render)
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
         serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
@@ -19,7 +19,7 @@ try {
         // Fall back to local file (for development)
         serviceAccount = require('./serviceAccountKey.json');
     }
-    
+
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
     });
@@ -95,7 +95,7 @@ const startOrderListener = () => {
             const newOrder = change.fullDocument;
             console.log("🔥 NEW ORDER DETECTED:", newOrder._id);
 
-            const targetRestaurantId = newOrder.restId; // Ensure this field exists in Order
+            const targetRestaurantId = newOrder.restaurantId; // Read 'restaurantId' from Order collection
 
             if (targetRestaurantId) {
                 // Find the restaurant to get the FCM token

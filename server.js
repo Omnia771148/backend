@@ -9,15 +9,23 @@ app.use(cors());
 app.use(express.json());
 
 // 1. Initialize Firebase Admin
-// You must put your serviceAccountKey.json in this same folder
 try {
-    const serviceAccount = require('./serviceAccountKey.json');
+    let serviceAccount;
+    
+    // Try to read from environment variable first (for production/Render)
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    } else {
+        // Fall back to local file (for development)
+        serviceAccount = require('./serviceAccountKey.json');
+    }
+    
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
     });
     console.log("Firebase Admin Initialized");
 } catch (error) {
-    console.error("Error initializing Firebase Admin: Missing serviceAccountKey.json?", error.message);
+    console.error("Error initializing Firebase Admin:", error.message);
 }
 
 // 2. Connect to MongoDB

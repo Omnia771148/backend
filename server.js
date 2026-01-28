@@ -118,11 +118,12 @@ const startOrderListener = () => {
             const targetRestaurantId = newOrder.restaurantId; // Read 'restaurantId' from Order collection
 
             if (targetRestaurantId) {
-                // Find the restaurant to get the FCM token
+                // Find the SPECIFIC restaurant to get the FCM token
+                // We match 'restId' in Restaurant collection with 'restaurantId' in Order collection
                 const restaurant = await Restaurant.findOne({ restId: targetRestaurantId });
 
                 if (restaurant && restaurant.fcmToken) {
-                    console.log(`Found Restaurant: ${restaurant.email}, Sending Notification...`);
+                    console.log(`Found Restaurant: ${restaurant.email} (ID: ${targetRestaurantId}), Sending Notification...`);
                     sendNotification(restaurant.fcmToken, newOrder);
                 } else {
                     console.log(`No FCM Token found for Restaurant (restId: ${targetRestaurantId})`);

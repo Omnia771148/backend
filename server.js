@@ -208,11 +208,10 @@ app.post('/api/orders/accept', async (req, res) => {
         await newAcceptedOrder.save();
 
         // 3. Update status in 'orderstatuses' collection
-        // We assume there is a document with orderId matching this order
+        // Just update existing document. Do NOT create new one.
         await OrderStatus.findOneAndUpdate(
             { orderId: orderId },
-            { status: 'waiting for deliveryboy', updatedAt: new Date() },
-            { upsert: true } // Create if not exists
+            { $set: { status: 'waiting for deliveryboy', updatedAt: new Date() } }
         );
 
         // 4. DELETE from 'orders' collection

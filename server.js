@@ -269,6 +269,26 @@ app.get('/api/accepted-orders', async (req, res) => {
     }
 });
 
+// 11. Fetch Accepted By Restaurants History API
+app.get('/api/accepted-by-restaurants', async (req, res) => {
+    try {
+        const { restaurantId } = req.query;
+
+        if (!restaurantId) {
+            return res.status(400).json({ success: false, message: 'Restaurant ID is required' });
+        }
+
+        // Fetch from 'acceptedbyrestorents' collection
+        const orders = await AcceptedByRestaurant.find({ restaurantId })
+            .sort({ acceptedAt: -1 }); // Sort by newest first
+
+        res.json({ success: true, orders });
+    } catch (error) {
+        console.error('Error fetching order history:', error);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+});
+
 
 // 7. Login API
 app.post('/api/auth/login', async (req, res) => {

@@ -56,6 +56,11 @@ const OrderSchema = new mongoose.Schema({
 
 const Order = mongoose.model('Order', OrderSchema);
 
+// 3.5 Root Route
+app.get('/', (req, res) => {
+    res.json({ message: 'Backend Server is running! 🚀', status: 'OK' });
+});
+
 // 4. API to Save FCM Token (Called by Restaurant App on Login/Startup)
 app.post('/update-fcm', async (req, res) => {
     const { restId, fcmToken } = req.body; // Expect restId from frontend

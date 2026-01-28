@@ -10,6 +10,7 @@ app.use(express.json());
 
 // Import Routes
 const ordersRouter = require('./routes/orders/orders');
+const acceptOrderRouter = require('./routes/orders/accept/route');
 
 // 1. Initialize Firebase Admin
 try {
@@ -67,6 +68,7 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/orders', ordersRouter);
+app.use('/api/orders/accept', acceptOrderRouter);
 
 // 4. API to Save FCM Token (Called by Restaurant App on Login/Startup)
 app.post('/update-fcm', async (req, res) => {

@@ -152,7 +152,28 @@ async function sendNotification(token, order) {
     }
 }
 
-// 8. Fetch Orders API (now in routes/orders.js)
+// 9. Accept Order API
+app.post('/api/orders/accept', async (req, res) => {
+    try {
+        const { orderId } = req.body;
+        if (!orderId) {
+            return res.status(400).json({ success: false, message: 'Order ID required' });
+        }
+
+        const order = await Order.findByIdAndUpdate(orderId, { status: 'Accepted' }, { new: true });
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        console.log(`Order ${orderId} Accepted!`);
+        res.json({ success: true, message: 'Order accepted successfully', order });
+    } catch (error) {
+        console.error('Accept Order Error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
 
 // 7. Login API
 app.post('/api/auth/login', async (req, res) => {

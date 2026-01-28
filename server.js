@@ -163,17 +163,27 @@ async function sendNotification(token, order) {
     }
 }
 
-// Accepted Order Schema
+// Accepted Order Schema (Collection: acceptedorders)
 const AcceptedOrderSchema = new mongoose.Schema({
     restaurantId: String,
     status: String,
     items: Array,
     acceptedAt: { type: Date, default: Date.now },
     originalOrderId: String,
-    // Include all other fields you need
 }, { collection: 'acceptedorders', strict: false });
 
 const AcceptedOrder = mongoose.model('AcceptedOrder', AcceptedOrderSchema);
+
+// Accepted By Restaurant Schema (Collection: acceptedbyretorents)
+const AcceptedByRestaurantSchema = new mongoose.Schema({
+    restaurantId: String,
+    status: String,
+    items: Array,
+    acceptedAt: { type: Date, default: Date.now },
+    originalOrderId: String,
+}, { collection: 'acceptedbyretorents', strict: false });
+
+const AcceptedByRestaurant = mongoose.model('AcceptedByRestaurant', AcceptedByRestaurantSchema);
 
 // Order Status Schema (for tracking status like 'waiting for deliveryboy')
 const OrderStatusSchema = new mongoose.Schema({
@@ -198,17 +208,29 @@ app.post('/api/orders/accept', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
 
-        // 2. Save to 'acceptedorders' collection
-        const newAcceptedOrder = new AcceptedOrder({
+        const commonData = {
             ...originalOrder.toObject(),
-            _id: new mongoose.Types.ObjectId(), // New ID
             originalOrderId: originalOrder._id,
-            status: 'Accepted'
+            status: 'Accepted',
+            acceptedAt: new Date()
+        };
+
+        // 2a. Save to 'acceptedorders' collection
+        const newAcceptedOrder = new AcceptedOrder({
+            ...commonData,
+            _id: new mongoose.Types.ObjectId()
         });
         await newAcceptedOrder.save();
 
+        // 2b. Save to 'acceptedbyretorents' collection
+        const newAcceptedByRestaurant = new AcceptedByRestaurant({
+            ...commonData,
+            _id: new mongoose.Types.ObjectId()
+        });
+        await newAcceptedByRestaurant.save();
+
         // 3. Update status in 'orderstatuses' collection
-        // Just update existing document. Do NOT create new one.
+        // JUST update existing document.
         // USE originalOrder.orderId because 'orderstatuses' uses the readable ID (e.g. ORD-00240)
         await OrderStatus.findOneAndUpdate(
             { orderId: originalOrder.orderId },
@@ -218,7 +240,7 @@ app.post('/api/orders/accept', async (req, res) => {
         // 4. DELETE from 'orders' collection
         await Order.findByIdAndDelete(orderId);
 
-        console.log(`Order ${orderId} Accepted: Moved to acceptedorders, Status updated, Deleted from orders.`);
+        console.log(`Order ${orderId} Accepted: Saved to BOTH collections, Status updated, Deleted from orders.`);
         res.json({ success: true, message: 'Order accepted processed successfully' });
 
     } catch (error) {

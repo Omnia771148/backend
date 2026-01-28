@@ -41,6 +41,7 @@ const RestaurantSchema = new mongoose.Schema({
     // Adjust these field names to match your actual database!
     email: String,
     restId: String, // CHANGED from restaurantId to restId
+    password: String,
     fcmToken: String
 }, { collection: 'restuarentusers', strict: false });
 
@@ -142,6 +143,61 @@ async function sendNotification(token, order) {
         console.log('Error sending message:', error);
     }
 }
+
+// 8. Fetch Orders API
+app.get('/api/orders', async (req, res) => {
+    try {
+        const { restId } = req.query;
+
+        if (!restId) {
+            return res.status(400).json({ success: false, message: 'Restaurant ID required' });
+        }
+
+        // Fetch orders for this restaurant, sorted by newest first
+        const orders = await Order.find({ restaurantId: restId }).sort({ _id: -1 }).limit(50);
+
+        res.json({ success: true, orders });
+    } catch (error) {
+        console.error('Fetch Orders Error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// 7. Login API
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ success: false, message: 'Email and password required' });
+        }
+
+        // Find user by email and password in 'restuarentusers' collection
+        // Note: In production, you really should Hash passwords! (e.g. bcrypt)
+        // But we will stick to your current logic for now.
+        const user = await Restaurant.findOne({ email: email, password: password });
+
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'Invalid email or password' });
+        }
+
+        // Return the user data
+        res.json({
+            success: true,
+            user: {
+                restId: user.restId,
+                restLocation: user.restLocation,
+                email: user.email,
+                phone: user.phone,
+                _id: user._id
+            }
+        });
+
+    } catch (error) {
+        console.error('Login Error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
 
 // Start Server
 const PORT = process.env.PORT || 4000;

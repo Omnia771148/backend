@@ -57,6 +57,19 @@ const OrderSchema = new mongoose.Schema({
 
 const Order = mongoose.model('Order', OrderSchema);
 
+// Accepted Order Schema
+const AcceptedOrderSchema = new mongoose.Schema({
+    // Keep consistent with OrderSchema
+    restaurantId: String,
+    status: String,
+    items: Array,
+    // Add any extra fields if needed, e.g. acceptedAt: Date
+    acceptedAt: { type: Date, default: Date.now },
+    originalOrderId: String
+}, { collection: 'acceptedorders', strict: false });
+
+const AcceptedOrder = mongoose.model('AcceptedOrder', AcceptedOrderSchema);
+
 // 3.5 Root Route
 app.get('/', (req, res) => {
     res.json({ message: 'Backend Server is running! 🚀', status: 'OK' });
@@ -77,6 +90,45 @@ app.get('/api/orders', async (req, res) => {
         res.json({ success: true, orders });
     } catch (error) {
         console.error('Fetch Orders Error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+
+app.post('/api/orders/accept', async (req, res) => {
+    try {
+        const { orderId } = req.body;
+        if (!orderId) {
+            return res.status(400).json({ success: false, message: 'Order ID required' });
+        }
+
+        // 1. Find the order in the main 'orders' collection
+        const originalOrder = await Order.findById(orderId);
+
+        if (!originalOrder) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        // 2. Create a new entry in 'acceptedorders' collection
+        const newAcceptedOrder = new AcceptedOrder({
+            ...originalOrder.toObject(), // Copy all fields
+            _id: new mongoose.Types.ObjectId(), // Generate NEW ID for this collection (optional, or keep same)
+            originalOrderId: originalOrder._id, // Keep reference
+            status: 'Accepted',
+            acceptedAt: new Date()
+        });
+
+        await newAcceptedOrder.save();
+        console.log(`Order ${orderId} moved to 'acceptedorders' collection!`);
+
+        // 3. Update the original order status (or delete it if you prefer)
+        // User said "it is just changing status", implying they WANT it moved.
+        // We will updated status AND moving it. 
+        await Order.findByIdAndUpdate(orderId, { status: 'Accepted' });
+
+        res.json({ success: true, message: 'Order accepted and moved successfully', order: newAcceptedOrder });
+    } catch (error) {
+        console.error('Accept Order Error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
@@ -163,27 +215,7 @@ async function sendNotification(token, order) {
     }
 }
 
-// 9. Accept Order API
-app.post('/api/orders/accept', async (req, res) => {
-    try {
-        const { orderId } = req.body;
-        if (!orderId) {
-            return res.status(400).json({ success: false, message: 'Order ID required' });
-        }
 
-        const order = await Order.findByIdAndUpdate(orderId, { status: 'Accepted' }, { new: true });
-
-        if (!order) {
-            return res.status(404).json({ success: false, message: 'Order not found' });
-        }
-
-        console.log(`Order ${orderId} Accepted!`);
-        res.json({ success: true, message: 'Order accepted successfully', order });
-    } catch (error) {
-        console.error('Accept Order Error:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
 
 
 // 7. Login API

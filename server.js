@@ -8,6 +8,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Import Routes
+const ordersRouter = require('./routes/orders/orders');
+
 // 1. Initialize Firebase Admin
 try {
     let serviceAccount;
@@ -61,6 +64,9 @@ const Order = mongoose.model('Order', OrderSchema);
 app.get('/', (req, res) => {
     res.json({ message: 'Backend Server is running! 🚀', status: 'OK' });
 });
+
+// Routes
+app.use('/api/orders', ordersRouter);
 
 // 4. API to Save FCM Token (Called by Restaurant App on Login/Startup)
 app.post('/update-fcm', async (req, res) => {
@@ -144,24 +150,7 @@ async function sendNotification(token, order) {
     }
 }
 
-// 8. Fetch Orders API
-app.get('/api/orders', async (req, res) => {
-    try {
-        const { restId } = req.query;
-
-        if (!restId) {
-            return res.status(400).json({ success: false, message: 'Restaurant ID required' });
-        }
-
-        // Fetch orders for this restaurant, sorted by newest first
-        const orders = await Order.find({ restaurantId: restId }).sort({ _id: -1 }).limit(50);
-
-        res.json({ success: true, orders });
-    } catch (error) {
-        console.error('Fetch Orders Error:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
+// 8. Fetch Orders API (now in routes/orders.js)
 
 // 7. Login API
 app.post('/api/auth/login', async (req, res) => {

@@ -174,14 +174,14 @@ const AcceptedOrderSchema = new mongoose.Schema({
 
 const AcceptedOrder = mongoose.model('AcceptedOrder', AcceptedOrderSchema);
 
-// Accepted By Restaurant Schema (Collection: acceptedbyretorents)
+// Accepted By Restaurant Schema (Collection: acceptedbyrestorents)
 const AcceptedByRestaurantSchema = new mongoose.Schema({
     restaurantId: String,
     status: String,
     items: Array,
     acceptedAt: { type: Date, default: Date.now },
     originalOrderId: String,
-}, { collection: 'acceptedbyretorents', strict: false });
+}, { collection: 'acceptedbyrestorents', strict: false });
 
 const AcceptedByRestaurant = mongoose.model('AcceptedByRestaurant', AcceptedByRestaurantSchema);
 

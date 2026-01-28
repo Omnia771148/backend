@@ -209,8 +209,9 @@ app.post('/api/orders/accept', async (req, res) => {
 
         // 3. Update status in 'orderstatuses' collection
         // Just update existing document. Do NOT create new one.
+        // USE originalOrder.orderId because 'orderstatuses' uses the readable ID (e.g. ORD-00240)
         await OrderStatus.findOneAndUpdate(
-            { orderId: orderId },
+            { orderId: originalOrder.orderId },
             { $set: { status: 'waiting for deliveryboy', updatedAt: new Date() } }
         );
 
